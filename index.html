@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選項轉換評分計算器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #1e1e1e;
+            color: white;
+            padding: 20px;
+        }
+        .item-box {
+            width: 450px;
+            margin: 20px auto;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        .item-header {
+            background: black;
+            color: cyan;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px 10px 0 0;
+        }
+        .item-image {
+            width: 60px;
+            height: 60px;
+            margin: 10px auto;
+            display: block;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+        }
+        .option-slot {
+            background: white;
+            color: black;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .option-value {
+            color: #0066cc;
+            font-size: 1.1em;
+        }
+        .option-score {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.95em;
+            min-width: 60px;
+        }
+        .option-score.zero {
+            background: #999;
+        }
+        .button {
+            background: cyan;
+            color: black;
+            font-weight: bold;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            margin: 8px;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .button:hover {
+            background: lightblue;
+        }
+        .button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .count-display {
+            margin-top: 10px;
+            font-weight: bold;
+            color: yellow;
+        }
+        .total-score {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        .score-breakdown {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="item-box">
+        <div class="item-header">+9 四龍的遺言 - 武斗技</div>
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23444'/%3E%3Ctext x='30' y='35' font-size='12' fill='%23fff' text-anchor='middle'%3E裝備%3C/text%3E%3C/svg%3E" alt="四龍的遺言" class="item-image">
+        
+        <div id="option1" class="option-slot">
+            <span>沒有正在應用的選項</span>
+        </div>
+        <div id="option2" class="option-slot">
+            <span>沒有正在應用的選項</span>
+        </div>
+        <div id="option3" class="option-slot">
+            <span>沒有正在應用的選項</span>
+        </div>
+        <div id="option4" class="option-slot">
+            <span>沒有正在應用的選項</span>
+        </div>
+
+        <button class="button" onclick="rollOptions()">選項轉換</button>
+        <button class="button" onclick="resetOptions()">重置</button>
+
+        <div class="count-display">
+            轉換次數: <span id="clickCount">0</span>次
+        </div>
+
+        <div class="total-score">
+            總分: <span id="totalScore">0</span>分
+        </div>
+
+        <div class="score-breakdown" id="scoreBreakdown">
+            點擊「選項轉換」開始計算分數
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+
+        const options = [
+            ["物理/魔法攻擊力（強化等級）", 0.8, 1.5, true],
+            ["暴擊傷害（強化等級）", 0.8, 1.5, true],
+            ["所有技能傷害（強化等級）", 0.8, 1.5, true],
+            ["物理/魔法攻擊力等級（強化等級）", 0.8, 1.5, true],
+            ["物理/魔法防禦力（強化等級）", 0.8, 1.5, true],
+            ["攻擊時，在3秒內造成攻擊傷害n%的額外傷害", 5, 12, false],
+            ["無視敵人物理/魔法防禦力", 4.5, 8, false],
+            ["物理/魔法攻擊力", 6, 13, false],
+            ["兩極化：攻擊/被擊傷害", 5, 12, false],
+            ["暴擊傷害", 6, 13, false],
+            ["物理/魔法攻擊力等級", 6, 13, false],
+            ["物理/魔法防禦力", 6, 13, false],
+            ["減少傷害", 8, 15, false],
+            ["給BOSS怪物造成的傷害", 8, 15, false],
+            ["受到BOSS怪物的傷害", 8, 15, false],
+            ["強韌的技能傷害", 6, 13, false],
+            ["強烈的技能傷害", 6, 13, false],
+            ["超越的技能傷害", 6, 13, false],
+            ["所有技能傷害", 6, 13, false],
+            ["動作速度", 8, 15, false]
+        ];
+
+        const scoringData = {
+            "物理/魔法攻擊力（強化等級）": {"1.5": 9.5, "1.4": 9.0, "1.3": 8.0, "1.2": 7.5, "1.1": 7.0, "1.0": 6.5, "0.9": 6.0, "0.8": 5.0},
+            "所有技能傷害（強化等級）": {"1.5": 8.5, "1.4": 8.0, "1.3": 7.5, "1.2": 7.0, "1.1": 6.5, "1.0": 5.5, "0.9": 5.0, "0.8": 4.5},
+            "物理/魔法攻擊力等級（強化等級）": {"1.5": 7.5, "1.4": 7.0, "1.3": 6.5, "1.2": 6.0, "1.1": 5.5, "1.0": 5.0, "0.9": 4.5, "0.8": 4.0},
+            "暴擊傷害（強化等級）": {"1.5": 7.5, "1.4": 7.0, "1.3": 6.5, "1.2": 6.0, "1.1": 5.5, "1.0": 5.0, "0.9": 4.5, "0.8": 4.0},
+            "物理/魔法攻擊力": {"13": 7.0, "12": 6.5, "11": 6.0, "10": 5.5, "9": 4.5, "8": 4.0, "7": 3.5, "6": 3.0},
+            "所有技能傷害": {"13": 6.5, "12": 6.0, "11": 5.0, "10": 4.5, "9": 4.5, "8": 4.0},
+            "物理/魔法攻擊力等級": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.0, "7": 2.5, "6": 2.0},
+            "暴擊傷害": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.5, "7": 3.0, "6": 2.5},
+            "兩極化：攻擊/被擊傷害": {"12": 8.0, "11": 7.0, "10": 6.5, "9": 6.0, "8": 5.0, "7": 4.5, "6": 4.0},
+            "強烈的技能傷害": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.0},
+            "給BOSS怪物造成的傷害": {"15": 5.0, "14": 4.5, "13": 4.5, "12": 4.0, "11": 4.0, "10": 3.5, "9": 3.0, "8": 2.5},
+            "超越的技能傷害": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.0},
+            "攻擊時，在3秒內造成攻擊傷害n%的額外傷害": {"12": 8.0, "11": 7.0, "10": 6.5, "9": 6.0, "8": 5.0, "7": 4.5, "6": 4.0}
+        };
+
+        function getRandomValue(min, max, isEnhancement) {
+            if (isEnhancement) {
+                return (Math.random() * (max - min) + min).toFixed(1);
+            } else {
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+        }
+
+        function calculateScore(optionName, value) {
+            if (!scoringData[optionName]) {
+                return 0;
+            }
+            
+            const valueStr = String(value);
+            const score = scoringData[optionName][valueStr];
+            return score || 0;
+        }
+
+        function rollOptions() {
+            clickCount++;
+            document.getElementById('clickCount').textContent = clickCount;
+
+            const selectedOptions = [];
+            const usedIndices = [];
+            let totalScore = 0;
+            const scoreDetails = [];
+
+            for (let i = 1; i <= 4; i++) {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * options.length);
+                } while (usedIndices.includes(randomIndex));
+                
+                usedIndices.push(randomIndex);
+                
+                const [name, min, max, isEnhancement] = options[randomIndex];
+                const value = getRandomValue(min, max, isEnhancement);
+                const score = calculateScore(name, value);
+                
+                totalScore += score;
+                
+                const optionDiv = document.getElementById(`option${i}`);
+                const displayValue = isEnhancement ? `${value}%` : `${value}%`;
+                
+                optionDiv.innerHTML = `
+                    <span>${name} <span class="option-value">${displayValue}</span></span>
+                    <span class="option-score ${score === 0 ? 'zero' : ''}">${score.toFixed(1)}分</span>
+                `;
+
+                scoreDetails.push(`${name} ${displayValue}: ${score.toFixed(1)}分`);
+            }
+
+            document.getElementById('totalScore').textContent = totalScore.toFixed(1);
+            document.getElementById('scoreBreakdown').innerHTML = scoreDetails.join('<br>');
+        }
+
+        function resetOptions() {
+            clickCount = 0;
+            document.getElementById('clickCount').textContent = clickCount;
+            document.getElementById('totalScore').textContent = '0';
+            document.getElementById('scoreBreakdown').textContent = '點擊「選項轉換」開始計算分數';
+
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`option${i}`).innerHTML = '<span>沒有正在應用的選項</span>';
+            }
+        }
+    </script>
+</body>
+</html>
