@@ -103,7 +103,7 @@
 </head>
 <body>
     <div class="item-box">
-        <div class="item-header">+9 四龍的遺言 - 武斗技</div>
+        <div class="item-header">+9 死龍的遺言</div>
         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23444'/%3E%3Ctext x='30' y='35' font-size='12' fill='%23fff' text-anchor='middle'%3E裝備%3C/text%3E%3C/svg%3E" alt="四龍的遺言" class="item-image">
         
         <div id="option1" class="option-slot">
@@ -121,9 +121,15 @@
 
         <button class="button" onclick="rollOptions()">選項轉換</button>
         <button class="button" onclick="resetOptions()">重置</button>
+        
+        <div style="margin-top: 15px; border-top: 2px solid #444; padding-top: 15px;">
+            <button class="button" style="background: #ff9800;" onclick="autoRollUntil(22, 24, '小畢業')">小畢業 (22-24分)</button>
+            <button class="button" style="background: #ff5722;" onclick="autoRollUntil(25, 29, '畢業')">畢業 (25-29分)</button>
+            <button class="button" style="background: #e91e63;" onclick="autoRollUntil(30, 999, '大畢業')">大畢業 (≥30分)</button>
+        </div>
 
         <div class="count-display">
-            轉換次數: <span id="clickCount">0</span>次
+            轉換次數: <span id="clickCount">0</span>次 | 消耗ED: <span id="totalED">0</span>
         </div>
 
         <div class="total-score">
@@ -133,10 +139,16 @@
         <div class="score-breakdown" id="scoreBreakdown">
             點擊「選項轉換」開始計算分數
         </div>
+
+        <div id="graduationStats" style="display: none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 8px; font-size: 1.1em;">
+        </div>
     </div>
 
     <script>
         let clickCount = 0;
+        let totalED = 0;
+        let smallGradCount = 0;  // 小畢業次數
+        let gradCount = 0;        // 畢業次數
 
         const options = [
             ["物理/魔法攻擊力（強化等級）", 0.8, 1.5, true],
@@ -144,7 +156,7 @@
             ["所有技能傷害（強化等級）", 0.8, 1.5, true],
             ["物理/魔法攻擊力等級（強化等級）", 0.8, 1.5, true],
             ["物理/魔法防禦力（強化等級）", 0.8, 1.5, true],
-            ["攻擊時，在3秒內造成攻擊傷害n%的額外傷害", 5, 12, false],
+            ["攻擊時，在3秒內造成攻擊傷害額外傷害", 5, 12, false],
             ["無視敵人物理/魔法防禦力", 4.5, 8, false],
             ["物理/魔法攻擊力", 6, 13, false],
             ["兩極化：攻擊/被擊傷害", 5, 12, false],
@@ -174,7 +186,7 @@
             "強烈的技能傷害": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.0},
             "給BOSS怪物造成的傷害": {"15": 5.0, "14": 4.5, "13": 4.5, "12": 4.0, "11": 4.0, "10": 3.5, "9": 3.0, "8": 2.5},
             "超越的技能傷害": {"13": 5.5, "12": 5.0, "11": 4.5, "10": 4.0, "9": 3.5, "8": 3.0},
-            "攻擊時，在3秒內造成攻擊傷害n%的額外傷害": {"12": 8.0, "11": 7.0, "10": 6.5, "9": 6.0, "8": 5.0, "7": 4.5, "6": 4.0}
+            "攻擊時，在3秒內造成攻擊傷害額外傷害": {"12": 8.0, "11": 7.0, "10": 6.5, "9": 6.0, "8": 5.0, "7": 4.5, "6": 4.0}
         };
 
         function getRandomValue(min, max, isEnhancement) {
@@ -197,7 +209,9 @@
 
         function rollOptions() {
             clickCount++;
+            totalED += 20000000;
             document.getElementById('clickCount').textContent = clickCount;
+            document.getElementById('totalED').textContent = totalED.toLocaleString();
 
             const selectedOptions = [];
             const usedIndices = [];
@@ -231,16 +245,164 @@
 
             document.getElementById('totalScore').textContent = totalScore.toFixed(1);
             document.getElementById('scoreBreakdown').innerHTML = scoreDetails.join('<br>');
+
+            // 檢查是否達成畢業條件並統計
+            if (totalScore >= 22 && totalScore <= 24) {
+                smallGradCount++;
+            }
+            if (totalScore >= 25 && totalScore <= 29) {
+                gradCount++;
+                showGraduationStats('畢業', totalScore, clickCount, totalED, scoreDetails, smallGradCount, 0);
+                showGraduationStatsPopup('畢業', totalScore, clickCount, totalED, scoreDetails, smallGradCount, 0);
+            }
+            if (totalScore >= 30) {
+                showGraduationStats('大畢業', totalScore, clickCount, totalED, scoreDetails, smallGradCount, gradCount);
+                showGraduationStatsPopup('大畢業', totalScore, clickCount, totalED, scoreDetails, smallGradCount, gradCount);
+            }
         }
 
         function resetOptions() {
             clickCount = 0;
+            totalED = 0;
+            smallGradCount = 0;
+            gradCount = 0;
             document.getElementById('clickCount').textContent = clickCount;
+            document.getElementById('totalED').textContent = '0';
             document.getElementById('totalScore').textContent = '0';
             document.getElementById('scoreBreakdown').textContent = '點擊「選項轉換」開始計算分數';
 
             for (let i = 1; i <= 4; i++) {
                 document.getElementById(`option${i}`).innerHTML = '<span>沒有正在應用的選項</span>';
+            }
+        }
+
+        function showGraduationStatsPopup(gradType, totalScore, rolls, ed, scoreDetails, smallGrads, grads) {
+            let extraStats = '';
+            if (gradType === '大畢業') {
+                extraStats = `\n達成前小畢業次數: ${smallGrads}次\n達成前畢業次數: ${grads}次`;
+            } else if (gradType === '畢業') {
+                extraStats = `\n達成前小畢業次數: ${smallGrads}次`;
+            }
+            
+            const detailsText = scoreDetails.join('\n');
+            
+            alert(`🎉 ${gradType}達成！\n\n總分: ${totalScore.toFixed(1)}分\n轉換次數: ${rolls}次\n消耗ED: ${ed.toLocaleString()}${extraStats}\n\n詳細選項:\n${detailsText}`);
+        }
+
+        function showGraduationStats(gradType, totalScore, rolls, ed, scoreDetails, smallGrads, grads) {
+            const statsDiv = document.getElementById('graduationStats');
+            statsDiv.style.display = 'block';
+            
+            let extraStats = '';
+            if (gradType === '大畢業') {
+                extraStats = `<div style="margin-top: 8px;">達成前小畢業次數: ${smallGrads}次 | 達成前畢業次數: ${grads}次</div>`;
+            } else if (gradType === '畢業') {
+                extraStats = `<div style="margin-top: 8px;">達成前小畢業次數: ${smallGrads}次</div>`;
+            }
+            
+            const detailsHTML = scoreDetails.join('<br>');
+            
+            statsDiv.innerHTML = `
+                <div style="font-size: 1.3em; margin-bottom: 8px;">🎉 ${gradType}達成！</div>
+                <div>總分: ${totalScore.toFixed(1)}分 | 轉換次數: ${rolls}次 | 消耗ED: ${ed.toLocaleString()}</div>
+                ${extraStats}
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.95em;">
+                    ${detailsHTML}
+                </div>
+            `;
+        }
+
+        function autoRollUntil(minScore, maxScore, goalName) {
+            // 重置所有計數
+            clickCount = 0;
+            totalED = 0;
+            smallGradCount = 0;
+            gradCount = 0;
+            document.getElementById('graduationStats').style.display = 'none';
+            
+            let currentScore = 0;
+            let tempSmallGrad = 0;
+            let tempGrad = 0;
+            
+            // 直接循環計算直到達成目標
+            while (true) {
+                
+                const selectedOptions = [];
+                const usedIndices = [];
+                let totalScore = 0;
+                const scoreDetails = [];
+
+                for (let i = 1; i <= 4; i++) {
+                    let randomIndex;
+                    do {
+                        randomIndex = Math.floor(Math.random() * options.length);
+                    } while (usedIndices.includes(randomIndex));
+                    
+                    usedIndices.push(randomIndex);
+                    
+                    const [name, min, max, isEnhancement] = options[randomIndex];
+                    const value = getRandomValue(min, max, isEnhancement);
+                    const score = calculateScore(name, value);
+                    
+                    totalScore += score;
+                    
+                    const displayValue = isEnhancement ? `${value}%` : `${value}%`;
+                    scoreDetails.push({
+                        name: name,
+                        value: displayValue,
+                        score: score,
+                        i: i
+                    });
+                }
+
+                clickCount++;
+                totalED += 20000000;
+                currentScore = totalScore;
+
+                // 統計達成次數
+                if (totalScore >= 22 && totalScore <= 24) {
+                    tempSmallGrad++;
+                }
+                if (totalScore >= 25 && totalScore <= 29) {
+                    tempGrad++;
+                }
+
+                // 檢查是否達到目標
+                if (totalScore >= minScore && totalScore <= maxScore) {
+                    // 更新顯示為最終結果
+                    document.getElementById('clickCount').textContent = clickCount;
+                    document.getElementById('totalED').textContent = totalED.toLocaleString();
+                    document.getElementById('totalScore').textContent = totalScore.toFixed(1);
+                    
+                    const detailsHTMLArray = scoreDetails.map(item => 
+                        `${item.name} ${item.value}: ${item.score.toFixed(1)}分`
+                    );
+                    document.getElementById('scoreBreakdown').innerHTML = detailsHTMLArray.join('<br>');
+                    
+                    // 顯示選項
+                    scoreDetails.forEach(item => {
+                        const optionDiv = document.getElementById(`option${item.i}`);
+                        optionDiv.innerHTML = `
+                            <span>${item.name} <span class="option-value">${item.value}</span></span>
+                            <span class="option-score ${item.score === 0 ? 'zero' : ''}">${item.score.toFixed(1)}分</span>
+                        `;
+                    });
+                    
+                    // 更新全局統計
+                    smallGradCount = tempSmallGrad;
+                    gradCount = tempGrad;
+                    
+                    // 顯示畢業統計
+                    showGraduationStats(goalName, totalScore, clickCount, totalED, detailsHTMLArray, tempSmallGrad, tempGrad);
+                    
+                    break;
+                }
+                
+                // 安全限制：最多執行100萬次
+                if (clickCount >= 1000000) {
+                    alert(`已執行100萬次仍未達成${goalName}目標，已停止。\n當前最高分: ${currentScore.toFixed(1)}分`);
+                    break;
+                }
             }
         }
     </script>
