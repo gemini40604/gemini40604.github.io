@@ -103,7 +103,7 @@
 </head>
 <body>
     <div class="item-box">
-        <div class="item-header">+9 死龍的遺言V2</div>
+        <div class="item-header">+9 死龍的遺言V3</div>
         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23444'/%3E%3Ctext x='30' y='35' font-size='12' fill='%23fff' text-anchor='middle'%3E裝備%3C/text%3E%3C/svg%3E" alt="四龍的遺言" class="item-image">
         
         <div id="option1" class="option-slot">
@@ -330,12 +330,12 @@
             "攻擊時，在3秒內造成攻擊傷害額外傷害": {"12": 8.0, "11": 7.0, "10": 6.5, "9": 6.0, "8": 5.0, "7": 4.5, "6": 4.0}
         };
 
-        // 加權隨機選擇函數
-        function weightedRandomSelect(usedIndices) {
-            // 過濾掉已使用的選項
+        // 加權隨機選擇函數（防止同屬性重複）
+        function weightedRandomSelect(usedNames) {
+            // 過濾掉已使用相同屬性名稱的選項
             const availableOptions = options
                 .map((opt, idx) => ({opt: opt, originalIndex: idx}))
-                .filter((item) => !usedIndices.includes(item.originalIndex));
+                .filter((item) => !usedNames.includes(item.opt[0]));
             
             // 計算總權重
             const totalWeight = availableOptions.reduce((sum, item) => sum + item.opt[4], 0);
@@ -381,16 +381,15 @@
             document.getElementById('totalED').textContent = totalED.toLocaleString();
 
             const selectedOptions = [];
-            const usedIndices = [];
+            const usedNames = [];
             let totalScore = 0;
             const scoreDetails = [];
 
             for (let i = 1; i <= 4; i++) {
-                // 使用加權隨機選擇
-                const randomIndex = weightedRandomSelect(usedIndices);
-                usedIndices.push(randomIndex);
-                
+                // 使用加權隨機選擇（傳入已使用的屬性名稱）
+                const randomIndex = weightedRandomSelect(usedNames);
                 const [name, min, max, isEnhancement] = options[randomIndex];
+                usedNames.push(name);
                 const value = getRandomValue(min, max, isEnhancement);
                 const score = calculateScore(name, value);
                 
@@ -492,16 +491,15 @@
             while (true) {
                 
                 const selectedOptions = [];
-                const usedIndices = [];
+                const usedNames = [];
                 let totalScore = 0;
                 const scoreDetails = [];
 
                 for (let i = 1; i <= 4; i++) {
-                    // 使用加權隨機選擇
-                    const randomIndex = weightedRandomSelect(usedIndices);
-                    usedIndices.push(randomIndex);
-                    
+                    // 使用加權隨機選擇（傳入已使用的屬性名稱）
+                    const randomIndex = weightedRandomSelect(usedNames);
                     const [name, min, max, isEnhancement] = options[randomIndex];
+                    usedNames.push(name);
                     const value = getRandomValue(min, max, isEnhancement);
                     const score = calculateScore(name, value);
                     
